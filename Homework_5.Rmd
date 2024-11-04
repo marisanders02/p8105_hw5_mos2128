@@ -36,3 +36,27 @@ sim_res %>%
 # Problem 2 
 
 
+
+```{r}
+normal_dist <- function(n, true_mean, sd = 5) {
+  sim_data <- rnorm(n = 30, mean = true_mean, sd = 5)
+  t_test <- t.test(sim_data)
+  results <- broom::tidy(t_test)
+  
+}
+
+sim_results_df <- 
+  expand_grid(
+    sample_size = 30,
+    true_mean = c(1,2,3,4,5,6),
+    iter = 1:5000
+  ) %>% 
+  mutate(
+    estimate_df = map(sample_size, \(x) normal_dist(x,true_mean, sd))) %>% 
+      unnest(estimate_df) %>% select(estimate, p.value, true_mean) 
+
+sim_results_df %>% group_by(true_mean) 
+
+  
+```
+
