@@ -55,8 +55,21 @@ sim_results_df <-
     estimate_df = map(sample_size, \(x) normal_dist(x,true_mean, sd))) %>% 
       unnest(estimate_df) %>% select(estimate, p.value, true_mean) 
 
-sim_results_df %>% group_by(true_mean) 
+sim_results_df %>% 
+  filter(p.value < 0.05) %>% 
+  group_by(true_mean) %>% 
+  summarize(count = n()) %>% 
+  ggplot(aes(x = true_mean, y = count)) + geom_line()
 
-  
+sim_results_df %>% 
+  group_by(true_mean) %>% 
+  summarize(mean_estimate = mean(estimate, na.rm = TRUE)) %>% 
+  ggplot(aes(x = true_mean, y = mean_estimate)) +  geom_line()
+
+sim_results_df %>% 
+  filter(p.value < 0.05) %>% 
+  group_by(true_mean) %>% 
+  summarize(mean_estimate = mean(estimate, na.rm = TRUE)) %>% 
+  ggplot(aes(x = true_mean, y = mean_estimate))  + geom_line()
 ```
 

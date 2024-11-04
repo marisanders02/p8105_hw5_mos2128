@@ -48,21 +48,30 @@ sim_results_df <-
     estimate_df = map(sample_size, \(x) normal_dist(x,true_mean, sd))) %>% 
       unnest(estimate_df) %>% select(estimate, p.value, true_mean) 
 
-sim_results_df %>% group_by(true_mean) 
+sim_results_df %>% 
+  filter(p.value < 0.05) %>% 
+  group_by(true_mean) %>% 
+  summarize(count = n()) %>% 
+  ggplot(aes(x = true_mean, y = count)) + geom_line()
 ```
 
-    ## # A tibble: 30,000 × 3
-    ## # Groups:   true_mean [6]
-    ##    estimate  p.value true_mean
-    ##       <dbl>    <dbl>     <dbl>
-    ##  1   3.70   0.000264         1
-    ##  2   1.74   0.0702           1
-    ##  3   1.62   0.0430           1
-    ##  4   0.208  0.838            1
-    ##  5   1.16   0.305            1
-    ##  6   1.22   0.223            1
-    ##  7   2.02   0.0612           1
-    ##  8  -0.0774 0.930            1
-    ##  9   1.19   0.249            1
-    ## 10   2.79   0.00443          1
-    ## # ℹ 29,990 more rows
+![](Homework_5_files/figure-gfm/unnamed-chunk-2-1.png)<!-- -->
+
+``` r
+sim_results_df %>% 
+  group_by(true_mean) %>% 
+  summarize(mean_estimate = mean(estimate, na.rm = TRUE)) %>% 
+  ggplot(aes(x = true_mean, y = mean_estimate)) +  geom_line()
+```
+
+![](Homework_5_files/figure-gfm/unnamed-chunk-2-2.png)<!-- -->
+
+``` r
+sim_results_df %>% 
+  filter(p.value < 0.05) %>% 
+  group_by(true_mean) %>% 
+  summarize(mean_estimate = mean(estimate, na.rm = TRUE)) %>% 
+  ggplot(aes(x = true_mean, y = mean_estimate))  + geom_line()
+```
+
+![](Homework_5_files/figure-gfm/unnamed-chunk-2-3.png)<!-- -->
