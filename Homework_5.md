@@ -80,7 +80,8 @@ sim_results_df %>%
 
 ``` r
 homicide_df <- read_csv("data/homicide-data.csv") %>% 
-  unite(city_state, c(city, state), sep = ", ") 
+  unite(city_state, c(city, state), sep = ", ") %>% 
+  mutate(result = ifelse(disposition == "Closed without arrest" | disposition == "Open/No arrest", "unsolved", "solved"))
 ```
 
     ## Rows: 52179 Columns: 12
@@ -96,7 +97,6 @@ Describe the data.
 
 ``` r
 homicide_df %>% 
-  mutate(result = ifelse(disposition == "Closed without arrest" | disposition == "Open/No arrest", "unsolved", "solved")) %>% 
   group_by(city_state, result) %>% 
   summarize(count = n()) %>% 
   pivot_wider(
@@ -113,10 +113,11 @@ homicide_df %>%
 | solved   |             232 |         600 |          1002 |             228 |            453 |        304 |         202 |           481 |        1462 |            385 |          509 |        813 |        143 |        1037 |        175 |            294 |        318 |        1449 |              728 |              571 |             704 |           809 |            222 |            1151 |            315 |        1031 |       294 |           712 |             179 |           489 |             504 |          384 |         439 |               346 |       240 |             1677 |         410 |            294 |          316 |            237 |             476 |                105 |           286 |               327 |          131 |           772 |          178 |       113 |         1 |       390 |            756 |
 | unsolved |             146 |         373 |          1825 |             196 |            347 |        310 |         319 |           206 |        4073 |            309 |          575 |        754 |        169 |        1482 |        101 |            255 |        169 |        1493 |              594 |              597 |             486 |           572 |            156 |            1106 |            261 |         483 |       450 |           403 |             187 |           278 |             930 |          243 |         508 |               326 |       169 |             1360 |         504 |            337 |          113 |            139 |             357 |                170 |           175 |               336 |          115 |           905 |          266 |        95 |        NA |       193 |            589 |
 
+Baltimore Homicide Proportion
+
 ``` r
 baltimore_homicide <- 
-  homicide_df %>% 
-  mutate(result = ifelse(disposition == "Closed without arrest" | disposition == "Open/No arrest", "unsolved", "solved")) %>% 
+  homicide_df  %>% 
   filter(city_state == "Baltimore, MD") %>% 
   group_by(result) %>% 
   summarize(count = n()) 
@@ -137,3 +138,51 @@ broom::tidy(prop.test(unsolved_count, total_count)) %>%
     ##   estimate conf.low conf.high
     ##      <dbl>    <dbl>     <dbl>
     ## 1    0.646    0.628     0.663
+
+Other cities Homicide Proportion
+
+``` r
+city_cases <- 
+  homicide_df %>% 
+  group_by(city_state, result) %>% 
+  summarize(count = n())
+```
+
+    ## `summarise()` has grouped output by 'city_state'. You can override using the
+    ## `.groups` argument.
+
+``` r
+city_counts <- city_cases %>%
+  pivot_wider(names_from = result, values_from = count, values_fill = 0) %>%
+  mutate(
+    unsolved_count = unsolved,
+    total_count = solved + unsolved
+  )
+
+
+results <- city_counts %>% 
+  group_by(city_state) %>% 
+  mutate(prop_test = map2(unsolved_count,total_count, \(x,y) prop.test(x = x, n = y )),
+         tidy = map(prop_test, broom::tidy)) %>% 
+  unnest(tidy) %>% select(city_state, estimate, conf.low, conf.high)
+```
+
+    ## Warning: There was 1 warning in `mutate()`.
+    ## ℹ In argument: `prop_test = map2(...)`.
+    ## ℹ In group 49: `city_state = "Tulsa, AL"`.
+    ## Caused by warning in `prop.test()`:
+    ## ! Chi-squared approximation may be incorrect
+
+``` r
+results %>% 
+  ggplot(aes(x = fct_reorder(city_state, estimate), y = estimate)) + 
+  geom_point() +
+  geom_errorbar(aes(ymin = conf.low, ymax = conf.high)) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) + labs(
+    title = "Proportion of Unsolved Homicides by City",
+    x = "City",
+    y = "Estimated Proportion of Unsolved Homicides"
+  )
+```
+
+![](Homework_5_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->

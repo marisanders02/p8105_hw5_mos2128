@@ -77,13 +77,13 @@ sim_results_df %>%
 
 ```{r}
 homicide_df <- read_csv("data/homicide-data.csv") %>% 
-  unite(city_state, c(city, state), sep = ", ") 
+  unite(city_state, c(city, state), sep = ", ") %>% 
+  mutate(result = ifelse(disposition == "Closed without arrest" | disposition == "Open/No arrest", "unsolved", "solved"))
 ```
 Describe the data.
 
 ```{r}
 homicide_df %>% 
-  mutate(result = ifelse(disposition == "Closed without arrest" | disposition == "Open/No arrest", "unsolved", "solved")) %>% 
   group_by(city_state, result) %>% 
   summarize(count = n()) %>% 
   pivot_wider(
@@ -92,10 +92,11 @@ homicide_df %>%
   ) %>% knitr::kable()
 ```
 
+Baltimore Homicide Proportion
+
 ```{r}
 baltimore_homicide <- 
-  homicide_df %>% 
-  mutate(result = ifelse(disposition == "Closed without arrest" | disposition == "Open/No arrest", "unsolved", "solved")) %>% 
+  homicide_df  %>% 
   filter(city_state == "Baltimore, MD") %>% 
   group_by(result) %>% 
   summarize(count = n()) 
@@ -110,5 +111,37 @@ total_count <- baltimore_homicide  %>%
 
 broom::tidy(prop.test(unsolved_count, total_count)) %>% 
   select(estimate, conf.low, conf.high)
+```
+
+Other cities Homicide Proportion
+
+```{r}
+city_cases <- 
+  homicide_df %>% 
+  group_by(city_state, result) %>% 
+  summarize(count = n())
+city_counts <- city_cases %>%
+  pivot_wider(names_from = result, values_from = count, values_fill = 0) %>%
+  mutate(
+    unsolved_count = unsolved,
+    total_count = solved + unsolved
+  )
+
+
+results <- city_counts %>% 
+  group_by(city_state) %>% 
+  mutate(prop_test = map2(unsolved_count,total_count, \(x,y) prop.test(x = x, n = y )),
+         tidy = map(prop_test, broom::tidy)) %>% 
+  unnest(tidy) %>% select(city_state, estimate, conf.low, conf.high)
+
+results %>% 
+  ggplot(aes(x = fct_reorder(city_state, estimate), y = estimate)) + 
+  geom_point() +
+  geom_errorbar(aes(ymin = conf.low, ymax = conf.high)) +
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1)) + labs(
+    title = "Proportion of Unsolved Homicides by City",
+    x = "City",
+    y = "Estimated Proportion of Unsolved Homicides"
+  )
 ```
 
