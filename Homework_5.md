@@ -96,38 +96,44 @@ Describe the data.
 
 ``` r
 homicide_df %>% 
-  group_by(city_state, disposition) %>% 
-  summarize(count = n())
+  mutate(result = ifelse(disposition == "Closed without arrest" | disposition == "Open/No arrest", "unsolved", "solved")) %>% 
+  group_by(city_state, result) %>% 
+  summarize(count = n()) %>% 
+  pivot_wider(
+    names_from = "city_state",
+    values_from = count
+  ) %>% knitr::kable()
 ```
 
     ## `summarise()` has grouped output by 'city_state'. You can override using the
     ## `.groups` argument.
 
-    ## # A tibble: 146 × 3
-    ## # Groups:   city_state [51]
-    ##    city_state      disposition           count
-    ##    <chr>           <chr>                 <int>
-    ##  1 Albuquerque, NM Closed by arrest        232
-    ##  2 Albuquerque, NM Closed without arrest    52
-    ##  3 Albuquerque, NM Open/No arrest           94
-    ##  4 Atlanta, GA     Closed by arrest        600
-    ##  5 Atlanta, GA     Closed without arrest    58
-    ##  6 Atlanta, GA     Open/No arrest          315
-    ##  7 Baltimore, MD   Closed by arrest       1002
-    ##  8 Baltimore, MD   Closed without arrest   152
-    ##  9 Baltimore, MD   Open/No arrest         1673
-    ## 10 Baton Rouge, LA Closed by arrest        228
-    ## # ℹ 136 more rows
+| result   | Albuquerque, NM | Atlanta, GA | Baltimore, MD | Baton Rouge, LA | Birmingham, AL | Boston, MA | Buffalo, NY | Charlotte, NC | Chicago, IL | Cincinnati, OH | Columbus, OH | Dallas, TX | Denver, CO | Detroit, MI | Durham, NC | Fort Worth, TX | Fresno, CA | Houston, TX | Indianapolis, IN | Jacksonville, FL | Kansas City, MO | Las Vegas, NV | Long Beach, CA | Los Angeles, CA | Louisville, KY | Memphis, TN | Miami, FL | Milwaukee, wI | Minneapolis, MN | Nashville, TN | New Orleans, LA | New York, NY | Oakland, CA | Oklahoma City, OK | Omaha, NE | Philadelphia, PA | Phoenix, AZ | Pittsburgh, PA | Richmond, VA | Sacramento, CA | San Antonio, TX | San Bernardino, CA | San Diego, CA | San Francisco, CA | Savannah, GA | St. Louis, MO | Stockton, CA | Tampa, FL | Tulsa, AL | Tulsa, OK | Washington, DC |
+|:---------|----------------:|------------:|--------------:|----------------:|---------------:|-----------:|------------:|--------------:|------------:|---------------:|-------------:|-----------:|-----------:|------------:|-----------:|---------------:|-----------:|------------:|-----------------:|-----------------:|----------------:|--------------:|---------------:|----------------:|---------------:|------------:|----------:|--------------:|----------------:|--------------:|----------------:|-------------:|------------:|------------------:|----------:|-----------------:|------------:|---------------:|-------------:|---------------:|----------------:|-------------------:|--------------:|------------------:|-------------:|--------------:|-------------:|----------:|----------:|----------:|---------------:|
+| solved   |             232 |         600 |          1002 |             228 |            453 |        304 |         202 |           481 |        1462 |            385 |          509 |        813 |        143 |        1037 |        175 |            294 |        318 |        1449 |              728 |              571 |             704 |           809 |            222 |            1151 |            315 |        1031 |       294 |           712 |             179 |           489 |             504 |          384 |         439 |               346 |       240 |             1677 |         410 |            294 |          316 |            237 |             476 |                105 |           286 |               327 |          131 |           772 |          178 |       113 |         1 |       390 |            756 |
+| unsolved |             146 |         373 |          1825 |             196 |            347 |        310 |         319 |           206 |        4073 |            309 |          575 |        754 |        169 |        1482 |        101 |            255 |        169 |        1493 |              594 |              597 |             486 |           572 |            156 |            1106 |            261 |         483 |       450 |           403 |             187 |           278 |             930 |          243 |         508 |               326 |       169 |             1360 |         504 |            337 |          113 |            139 |             357 |                170 |           175 |               336 |          115 |           905 |          266 |        95 |        NA |       193 |            589 |
 
 ``` r
-homicide_df %>% 
-  filter(city_state == "Baltimore, MD") %>% group_by(disposition) %>% 
+baltimore_homicide <- 
+  homicide_df %>% 
+  mutate(result = ifelse(disposition == "Closed without arrest" | disposition == "Open/No arrest", "unsolved", "solved")) %>% 
+  filter(city_state == "Baltimore, MD") %>% 
+  group_by(result) %>% 
   summarize(count = n()) 
+
+unsolved_count <- baltimore_homicide %>% 
+  filter(result == "unsolved") %>% 
+  pull(count)
+
+total_count <- baltimore_homicide  %>% 
+  summarize(total = sum(count)) %>% 
+  pull(total)
+
+broom::tidy(prop.test(unsolved_count, total_count)) %>% 
+  select(estimate, conf.low, conf.high)
 ```
 
-    ## # A tibble: 3 × 2
-    ##   disposition           count
-    ##   <chr>                 <int>
-    ## 1 Closed by arrest       1002
-    ## 2 Closed without arrest   152
-    ## 3 Open/No arrest         1673
+    ## # A tibble: 1 × 3
+    ##   estimate conf.low conf.high
+    ##      <dbl>    <dbl>     <dbl>
+    ## 1    0.646    0.628     0.663

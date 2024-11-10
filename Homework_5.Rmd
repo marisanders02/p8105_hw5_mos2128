@@ -83,14 +83,32 @@ Describe the data.
 
 ```{r}
 homicide_df %>% 
-  group_by(city_state, disposition) %>% 
-  summarize(count = n())
+  mutate(result = ifelse(disposition == "Closed without arrest" | disposition == "Open/No arrest", "unsolved", "solved")) %>% 
+  group_by(city_state, result) %>% 
+  summarize(count = n()) %>% 
+  pivot_wider(
+    names_from = "city_state",
+    values_from = count
+  ) %>% knitr::kable()
 ```
 
 ```{r}
-homicide_df %>% 
+baltimore_homicide <- 
+  homicide_df %>% 
+  mutate(result = ifelse(disposition == "Closed without arrest" | disposition == "Open/No arrest", "unsolved", "solved")) %>% 
   filter(city_state == "Baltimore, MD") %>% 
-  group_by(disposition) %>% 
+  group_by(result) %>% 
   summarize(count = n()) 
+
+unsolved_count <- baltimore_homicide %>% 
+  filter(result == "unsolved") %>% 
+  pull(count)
+
+total_count <- baltimore_homicide  %>% 
+  summarize(total = sum(count)) %>% 
+  pull(total)
+
+broom::tidy(prop.test(unsolved_count, total_count)) %>% 
+  select(estimate, conf.low, conf.high)
 ```
 
