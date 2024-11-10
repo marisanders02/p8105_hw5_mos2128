@@ -75,3 +75,59 @@ sim_results_df %>%
 ```
 
 ![](Homework_5_files/figure-gfm/unnamed-chunk-2-3.png)<!-- -->
+
+# Problem 3
+
+``` r
+homicide_df <- read_csv("data/homicide-data.csv") %>% 
+  unite(city_state, c(city, state), sep = ", ") 
+```
+
+    ## Rows: 52179 Columns: 12
+    ## ── Column specification ────────────────────────────────────────────────────────
+    ## Delimiter: ","
+    ## chr (9): uid, victim_last, victim_first, victim_race, victim_age, victim_sex...
+    ## dbl (3): reported_date, lat, lon
+    ## 
+    ## ℹ Use `spec()` to retrieve the full column specification for this data.
+    ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
+
+Describe the data.
+
+``` r
+homicide_df %>% 
+  group_by(city_state, disposition) %>% 
+  summarize(count = n())
+```
+
+    ## `summarise()` has grouped output by 'city_state'. You can override using the
+    ## `.groups` argument.
+
+    ## # A tibble: 146 × 3
+    ## # Groups:   city_state [51]
+    ##    city_state      disposition           count
+    ##    <chr>           <chr>                 <int>
+    ##  1 Albuquerque, NM Closed by arrest        232
+    ##  2 Albuquerque, NM Closed without arrest    52
+    ##  3 Albuquerque, NM Open/No arrest           94
+    ##  4 Atlanta, GA     Closed by arrest        600
+    ##  5 Atlanta, GA     Closed without arrest    58
+    ##  6 Atlanta, GA     Open/No arrest          315
+    ##  7 Baltimore, MD   Closed by arrest       1002
+    ##  8 Baltimore, MD   Closed without arrest   152
+    ##  9 Baltimore, MD   Open/No arrest         1673
+    ## 10 Baton Rouge, LA Closed by arrest        228
+    ## # ℹ 136 more rows
+
+``` r
+homicide_df %>% 
+  filter(city_state == "Baltimore, MD") %>% group_by(disposition) %>% 
+  summarize(count = n()) 
+```
+
+    ## # A tibble: 3 × 2
+    ##   disposition           count
+    ##   <chr>                 <int>
+    ## 1 Closed by arrest       1002
+    ## 2 Closed without arrest   152
+    ## 3 Open/No arrest         1673

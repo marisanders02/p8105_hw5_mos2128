@@ -73,3 +73,24 @@ sim_results_df %>%
   ggplot(aes(x = true_mean, y = mean_estimate))  + geom_line()
 ```
 
+# Problem 3 
+
+```{r}
+homicide_df <- read_csv("data/homicide-data.csv") %>% 
+  unite(city_state, c(city, state), sep = ", ") 
+```
+Describe the data.
+
+```{r}
+homicide_df %>% 
+  group_by(city_state, disposition) %>% 
+  summarize(count = n())
+```
+
+```{r}
+homicide_df %>% 
+  filter(city_state == "Baltimore, MD") %>% 
+  group_by(disposition) %>% 
+  summarize(count = n()) 
+```
+
