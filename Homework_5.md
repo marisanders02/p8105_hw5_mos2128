@@ -28,53 +28,66 @@ sim_res %>%
 
 ![](Homework_5_files/figure-gfm/unnamed-chunk-1-1.png)<!-- -->
 
+As the amount of people in the room increases, the probability that 2
+people have the same birthday also increases. The probability that 2
+people have the same birthday reaches 1 at around n = 50. This means if
+there are 50 people in the room, we are certain to have at least 2
+people share a birthday.
+
 # Problem 2
 
 ``` r
-normal_dist <- function(n, true_mean, sd = 5) {
-  sim_data <- rnorm(n = 30, mean = true_mean, sd = 5)
-  t_test <- t.test(sim_data)
-  results <- broom::tidy(t_test)
-  
+ttest <- function(data) {
+  t_test <- t.test(data) %>%  
+    broom::tidy(t_test)
+  return(t_test)
 }
 
 sim_results_df <- 
   expand_grid(
-    sample_size = 30,
-    true_mean = c(1,2,3,4,5,6),
+    true_mean = 0:6,
     iter = 1:5000
   ) %>% 
   mutate(
-    estimate_df = map(sample_size, \(x) normal_dist(x,true_mean, sd))) %>% 
-      unnest(estimate_df) %>% select(estimate, p.value, true_mean) 
+    estimate_df = map(true_mean, \(x) rnorm(30, x, 5)), 
+    test = map(estimate_df, ttest)) %>% 
+  unnest(test)
 
-sim_results_df %>% 
-  filter(p.value < 0.05) %>% 
-  group_by(true_mean) %>% 
-  summarize(count = n()) %>% 
-  ggplot(aes(x = true_mean, y = count)) + geom_line()
+sim_results_df %>%
+  group_by(true_mean) %>%
+ mutate(prop = mean((p.value < .05))) %>%
+  ggplot(aes(x = true_mean, y = prop)) +
+  geom_line()
 ```
 
 ![](Homework_5_files/figure-gfm/unnamed-chunk-2-1.png)<!-- -->
 
+As the true mean increases, power increases. When `true_mean` equals to
+6, the power goes to 1.
+
 ``` r
-sim_results_df %>% 
+full_dataplot <- 
+  sim_results_df %>% 
   group_by(true_mean) %>% 
   summarize(mean_estimate = mean(estimate, na.rm = TRUE)) %>% 
   ggplot(aes(x = true_mean, y = mean_estimate)) +  geom_line()
-```
 
-![](Homework_5_files/figure-gfm/unnamed-chunk-2-2.png)<!-- -->
-
-``` r
-sim_results_df %>% 
+rejected_dataplot <-
+  sim_results_df %>% 
   filter(p.value < 0.05) %>% 
   group_by(true_mean) %>% 
   summarize(mean_estimate = mean(estimate, na.rm = TRUE)) %>% 
   ggplot(aes(x = true_mean, y = mean_estimate))  + geom_line()
+
+full_dataplot + rejected_dataplot
 ```
 
-![](Homework_5_files/figure-gfm/unnamed-chunk-2-3.png)<!-- -->
+![](Homework_5_files/figure-gfm/unnamed-chunk-3-1.png)<!-- -->
+
+The plot across all samples shows that the average estimate $\hat \mu$
+is approximately equal to $\mu$. The plot showing only when `p.value` is
+rejected seems to overestimate $\mu$ at lower `true_mean` values, but as
+the $\mu$ increases, the estimates become more accurate.
 
 # Problem 3
 
@@ -93,7 +106,13 @@ homicide_df <- read_csv("data/homicide-data.csv") %>%
     ## ℹ Use `spec()` to retrieve the full column specification for this data.
     ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
 
-Describe the data.
+This data has `nrow(homicide_df)` rows and `ncol(homicide_df)` columns.
+It includes the variables `names(homicide_df)`. To make the data easier
+to use, I combined the `city` and `state` variables in the original
+dataset to a single `city_state` column. In order to be able to
+calculate values needed in next questions, I made a column that
+outputted `unsolved` if `disposition` equaled Open/No Arrest or Closed
+Without Arrest and `solved` otherwise.
 
 ``` r
 homicide_df %>% 
@@ -186,4 +205,4 @@ results %>%
   )
 ```
 
-![](Homework_5_files/figure-gfm/unnamed-chunk-6-1.png)<!-- -->
+![](Homework_5_files/figure-gfm/unnamed-chunk-7-1.png)<!-- -->
