@@ -29,10 +29,11 @@ sim_res %>%
 ![](Homework_5_files/figure-gfm/unnamed-chunk-1-1.png)<!-- -->
 
 As the amount of people in the room increases, the probability that 2
-people have the same birthday also increases. The probability that 2
-people have the same birthday reaches 1 at around n = 50. This means if
-there are 50 people in the room, we are certain to have at least 2
-people share a birthday.
+people have the same birthday also increases.It would take around 22
+people to have a shared birthday at least 50% of the time. The
+probability that 2 people have the same birthday reaches 1 at around n =
+50. This means if there are 50 people in the room, we are certain to
+have at least 2 people share a birthday.
 
 # Problem 2
 
@@ -63,7 +64,9 @@ sim_results_df %>%
 ![](Homework_5_files/figure-gfm/unnamed-chunk-2-1.png)<!-- -->
 
 As the true mean increases, power increases. When `true_mean` equals to
-6, the power goes to 1.
+6, the power goes to 1. This means that the higher the effect size, the
+higher the power because the difference between the null and `true_mean`
+is larger.
 
 ``` r
 full_dataplot <- 
@@ -87,7 +90,9 @@ full_dataplot + rejected_dataplot
 The plot across all samples shows that the average estimate $\hat \mu$
 is approximately equal to $\mu$. The plot showing only when `p.value` is
 rejected seems to overestimate $\mu$ at lower `true_mean` values, but as
-the $\mu$ increases, the estimates become more accurate.
+the $\mu$ increases, the estimates become more accurate. This might
+happen because the more extreme the effect size is makes it more likely
+to reject the null.
 
 # Problem 3
 
@@ -106,10 +111,11 @@ homicide_df <- read_csv("data/homicide-data.csv") %>%
     ## ℹ Use `spec()` to retrieve the full column specification for this data.
     ## ℹ Specify the column types or set `show_col_types = FALSE` to quiet this message.
 
-This data has `nrow(homicide_df)` rows and `ncol(homicide_df)` columns.
-It includes the variables `names(homicide_df)`. To make the data easier
-to use, I combined the `city` and `state` variables in the original
-dataset to a single `city_state` column. In order to be able to
+This data has 52179 rows and 12 columns. It includes the variables uid,
+reported_date, victim_last, victim_first, victim_race, victim_age,
+victim_sex, city_state, lat, lon, disposition, result. To make the data
+easier to use, I combined the `city` and `state` variables in the
+original dataset to a single `city_state` column. In order to be able to
 calculate values needed in next questions, I made a column that
 outputted `unsolved` if `disposition` equaled Open/No Arrest or Closed
 Without Arrest and `solved` otherwise.
